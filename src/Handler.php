@@ -21,7 +21,7 @@ class Handler
 
     public function __construct($config, $env)
     {
-        $conf = json_decode($config, true)[$env];
+        $conf = $config[$env];
 
         $this->env = $env;
 
@@ -53,8 +53,8 @@ class Handler
     protected function makeCommitMessages()
     {
         foreach ($this->payload['commits'] as $commit) {
-            $msg = '<a href="mailto:'.$commit['author']['email'].'">'.$commit['author']['name'].'</a>:<br />';
-            $msg .= $commit['message'].'<br />';
+            $msg = '<a href="mailto:'.$commit['author']['email'].'">'.$commit['author']['name'].'</a> commited:<br />';
+            $msg .= '<i>'.$commit['message'].'</i><br /><br />';
             $msg .= 'commit: <a href="'.$commit['url'].'">'.$commit['id'].'</a>';
             $this->commitMessages[] = $msg;
         }
@@ -66,8 +66,8 @@ class Handler
         $headers .= "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
 
-        $body = "<html><body><b><a href=\"{$this->payload['compare']}\">Compare</a> with previous release</b><br><br>";
-        $body .= '<b>CHANGE LOG</b><br /><br />';
+        $body = "<html><body><b><a href=\"{$this->payload['compare']}\">Compare</a> with previous release</b><hr>";
+        $body .= '<b>CHANGE LOG:</b><br /><br />';
         $body .= implode('<hr/>', $this->commitMessages);
         $body .= '<hr/><b>COMMAND RESULTS</b><br /><br />';
         $body .= '<pre>';
@@ -81,12 +81,13 @@ class Handler
     {
         chdir($this->projectPath);
 
-        exec("git fetch origin && git reset --hard origin/$this->targetBranch", $this->commandOutputs, $exitCode);
-        echo $exitCode;
+        array_unshift($this->commands, "git fetch origin && git reset --hard origin/$this->targetBranch");
 
         foreach ($this->commands as $command) {
+            $this->commandOutputs[] = $command.':';
             exec($command, $this->commandOutputs, $exitCode);
-            echo "$command -- $exitCode";
+            $this->commandOutputs[] = 'Exit code: '.$exitCode;
+            $this->commandOutputs[] = '==============================';
         }
     }
 
@@ -102,7 +103,7 @@ class Handler
 
         if ($this->targetBranch != explode('/', $this->payload['ref'])[2]) {
             http_response_code(404);
-            $message = 'Will not deploy because target branch == '.explode('/', $this->payload['ref'])[2]."while $targetBranch was expected";
+            $message = 'Will not deploy because target branch == '.explode('/', $this->payload['ref'])[2]." while $targetBranch was expected";
             $this->failToMessage($message);
         }
 
