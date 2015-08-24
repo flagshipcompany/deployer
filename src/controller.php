@@ -13,6 +13,10 @@ $app->post('/{project}/{env}', function (Request $request, Application $app, $pr
         return new Response("$hash is not equal to expected hash $cmpHash", 400);
     }
 
+    if (strpos($request->headers->get('USER_AGENT'), 'GitHub-Hookshot') === false) {
+        return new Response('Not a github webhook', 400);
+    }
+
     $handler = new Handler($app['deployer.config'][$project], $env);
 
     $handler->run();

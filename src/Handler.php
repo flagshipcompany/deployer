@@ -38,10 +38,6 @@ class Handler
 
     public function run()
     {
-        if (strpos($_SERVER['HTTP_USER_AGENT'], 'GitHub-Hookshot') === false) {
-            return; //It's not a webhook request, disregard and carry on!
-        }
-
         $this->checkPrerequisites();
         $this->runCommands();
         $this->makeCommitMessages();
@@ -66,10 +62,11 @@ class Handler
         $headers .= "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
 
-        $body = "<html><body><b><a href=\"{$this->payload['compare']}\">Compare</a> with previous release</b><hr>";
-        $body .= '<b>CHANGE LOG:</b><br /><br />';
+        $body = '<html><body>';
+        $body .= '<b>CHANGE LOG:</b><br />';
         $body .= implode('<hr/>', $this->commitMessages);
-        $body .= '<hr/><b>COMMAND RESULTS</b><br /><br />';
+        $body .= "<hr /><b><a href=\"{$this->payload['compare']}\">Compare</a> with previous release</b>";
+        $body .= '<hr/><b>COMMAND RESULTS</b><br />';
         $body .= '<pre>';
         $body .= implode("\n", $this->commandOutputs);
         $body .= '</pre><br /></body></html>';
@@ -86,7 +83,7 @@ class Handler
         foreach ($this->commands as $command) {
             $this->commandOutputs[] = $command.':';
             exec($command, $this->commandOutputs, $exitCode);
-            $this->commandOutputs[] = 'Exit code: '.$exitCode;
+            $this->commandOutputs[] = 'Exit code: '.($exitCode === 0 ? 'OK' : $exitCode);
             $this->commandOutputs[] = '==============================';
         }
     }
