@@ -3,12 +3,11 @@
     "description": "A tool to handle github push webhooks",
     "license": "MIT",
     "require": {
-        "php": ">=5.3.9"
+        "php": ">=5.5.9",
+        "silex/silex": "~2.0@dev"
     },
     "autoload": {
-        "psr-4": {
-            "Flagship\\Deployer\\": "src/"
-        }
+        "psr-0": { "": "src/" }
     }
     
 }

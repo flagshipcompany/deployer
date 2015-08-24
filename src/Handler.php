@@ -1,6 +1,5 @@
 <?php
 
-namespace Flagship\Deployer;
 
 /**
  *  Handling the webhook from Github.
@@ -18,7 +17,6 @@ class Handler
     protected $fromEmail = '';
 
     protected $commandOutputs = [];
-    protected $file;
     protected $commitMessages = [];
 
     public function __construct($config, $env)
@@ -36,8 +34,6 @@ class Handler
         $this->fromEmail = $conf['from_email'];
 
         putenv('PATH=/sbin:/bin:/usr/sbin:/usr/bin'); //making sure we can find usr/bin
-
-        $this->file = __DIR__.'/'.__FILE__;
     }
 
     public function run()
@@ -104,12 +100,6 @@ class Handler
             $this->failToMessage($message);
         }
 
-        if (!isset($_POST['secret']) || $this->secret != $_POST['secret']) {
-            http_response_code(403);
-            $message = 'got hit with a github deploy hook but there is no secret or the secret do not match';
-            $this->failToMessage($message);
-        }
-
         if ($this->targetBranch != explode('/', $this->payload['ref'])[2]) {
             http_response_code(404);
             $message = 'Will not deploy because target branch == '.explode('/', $this->payload['ref'])[2]."while $targetBranch was expected";
@@ -125,7 +115,8 @@ class Handler
 
     protected function failToMessage($message)
     {
-        echo $this->file.' '.$message;
-        error_log($this->file.' '.$message);
+        echo __FILE__.' '.$message;
+        error_log(__FILE__.' '.$message);
+        die;
     }
 }
