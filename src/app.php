@@ -13,4 +13,8 @@ if (!file_exists($configPath) && !is_writable($configPath) && !is_readable($conf
 
 $app['deployer.config'] = json_decode(file_get_contents(__DIR__.'/../config.json'), true);
 
+if (is_null($app['deployer.config'])) {
+    throw new Exception('The config file looks like is not a valid JSON');
+}
+
 return $app;
