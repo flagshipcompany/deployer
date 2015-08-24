@@ -116,7 +116,7 @@ class Handler
             $this->failToMessage($message);
         }
 
-        if (!in_array(strtolower($this->payload['pusher']['email']), $this->acceptedPushers)) {
+        if (count($this->acceptedPushers) > 0 && !in_array(strtolower($this->payload['pusher']['email']), $this->acceptedPushers)) {
             http_response_code(403);
             $message = strtolower($this->payload['pusher']['email']).' is not in the list of accepted pushers ( '.implode(', ', $this->acceptedPushers).')';
             $this->failToMessage($message);
