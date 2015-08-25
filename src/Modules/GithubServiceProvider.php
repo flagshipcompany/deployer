@@ -1,10 +1,16 @@
 <?php
 
+namespace Modules;
+
+use Pimple\Container;
+use Pimple\ServiceProviderInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  *  Handling the webhook from Github.
  */
-class Handler
+class GithubServiceProvider  implements ServiceProviderInterface
 {
     protected $targetBranch = 'master';
     protected $payload;
@@ -19,11 +25,45 @@ class Handler
     protected $commandOutputs = [];
     protected $commitMessages = [];
 
-    public function __construct($config, $env)
-    {
-        $conf = $config[$env];
+    protected $app;
 
-        $this->env = $env;
+    public function register(Container $app)
+    {
+        $this->app = $app;
+
+        $app['deployer.vcs_service'] = $this;
+    }
+    public function __construct()
+    {
+    }
+
+    public function run(Request $request)
+    {
+        putenv('PATH=/sbin:/bin:/usr/sbin:/usr/bin'); //making sure we can find usr/bin and thus the programs.
+
+
+        $this->parseConfig($request);
+
+        $preReqs = $this->checkPrerequisites($request);
+        if (!is_null($preReqs)) {
+            return $preReqs;
+        }
+        $this->runCommands();
+        $this->makeCommitMessages();
+
+        if (!$this->sendEmail()) {
+            return new Response($this->resultContent, 500);
+        }
+
+        return new Response('OK', 200);
+    }
+
+    protected function parseConfig(Request $request)
+    {
+        $project = $request->attributes->get('project');
+        $this->env = $request->attributes->get('env');
+
+        $conf = $app['deployer.config'][$project][$this->env];
 
         $this->targetBranch = $conf['branch'];
         $this->acceptedPushers = $conf['accepted_pushers'];
@@ -32,18 +72,7 @@ class Handler
         $this->projectPath = $conf['project_path'];
         $this->notifyEmails = $conf['notify_emails'];
         $this->fromEmail = $conf['from_email'];
-
-        putenv('PATH=/sbin:/bin:/usr/sbin:/usr/bin'); //making sure we can find usr/bin
-    }
-
-    public function run()
-    {
-        $this->checkPrerequisites();
-        $this->runCommands();
-        $this->makeCommitMessages();
-        $this->sendEmail();
-
-        die; //we're done, no need to run the rest of the app.
+        $this->secret = $conf['secret'];
     }
 
     protected function makeCommitMessages()
@@ -71,7 +100,9 @@ class Handler
         $body .= implode("\n", $this->commandOutputs);
         $body .= '</pre><br /></body></html>';
 
-        mail(implode(',', $this->notifyEmails), strtoupper($this->env)." RELEASE - {$this->projectName}", $body, $headers);
+        $this->resultContent = $body;
+
+        return mail(implode(',', $this->notifyEmails), strtoupper($this->env)." RELEASE - {$this->projectName}", $body, $headers);
     }
 
     protected function runCommands()
@@ -88,33 +119,31 @@ class Handler
         }
     }
 
-    protected function checkPrerequisites()
+    protected function checkPrerequisites(Request $request)
     {
-        $this->payload = json_decode($_POST['payload'], true);
+        if (strpos($request->headers->get('USER_AGENT'), 'GitHub-Hookshot') === false) {
+            return new Response('Not a github webhook', 400);
+        }
+
+        $hash = substr($request->headers->get('X_HUB_SIGNATURE'), 5);
+        $cmpHash = hash_hmac('sha1', $request->getContent(), $this->secret);
+
+        if (!$hash === $cmpHash) {
+            return new Response("$hash is not equal to expected hash $cmpHash", 400);
+        }
+
+        $this->payload = json_decode($request->request->get('payload'), true);
 
         if ($this->payload === null) {
-            http_response_code(500);
-            $message = 'got hit with a github deploy hook but payload is empty or is unreadable';
-            $this->failToMessage($message);
+            return new Response('Got hit with a github deploy hook but payload is empty or is unreadable', 400);
         }
 
         if ($this->targetBranch != explode('/', $this->payload['ref'])[2]) {
-            http_response_code(404);
-            $message = 'Will not deploy because target branch == '.explode('/', $this->payload['ref'])[2]." while $targetBranch was expected";
-            $this->failToMessage($message);
+            return new Response('Will not deploy because target branch == '.explode('/', $this->payload['ref'])[2]." while $targetBranch was expected", 400);
         }
 
         if (count($this->acceptedPushers) > 0 && !in_array(strtolower($this->payload['pusher']['email']), $this->acceptedPushers)) {
-            http_response_code(403);
-            $message = strtolower($this->payload['pusher']['email']).' is not in the list of accepted pushers ( '.implode(', ', $this->acceptedPushers).')';
-            $this->failToMessage($message);
+            return new Response(strtolower($this->payload['pusher']['email']).' is not in the list of accepted pushers ( '.implode(', ', $this->acceptedPushers).')', 403);
         }
-    }
-
-    protected function failToMessage($message)
-    {
-        echo __FILE__.' '.$message;
-        error_log(__FILE__.' '.$message);
-        die;
     }
 }
