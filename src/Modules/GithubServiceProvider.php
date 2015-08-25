@@ -78,9 +78,9 @@ class GithubServiceProvider  implements ServiceProviderInterface
     protected function makeCommitMessages()
     {
         foreach ($this->payload['commits'] as $commit) {
-            $msg = '<a href="mailto:'.$commit['author']['email'].'">'.$commit['author']['name'].'</a> commited:<br />';
-            $msg .= '<i>'.$commit['message'].'</i><br /><br />';
-            $msg .= 'commit: <a href="'.$commit['url'].'">'.$commit['id'].'</a>';
+            $msg = "<a href=\"mailto:{$commit['author']['email']}\">{$commit['author']['name']}</a> committed:<br />";
+            $msg .= "<pre>{$commit['message']}</pre><br />";
+            $msg .= "See <a href=\"{$commit['url']}\">commit</a> on GitHub";
             $this->commitMessages[] = $msg;
         }
     }
