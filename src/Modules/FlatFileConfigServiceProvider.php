@@ -23,7 +23,7 @@ class FlatFileConfigServiceProvider  implements ServiceProviderInterface
             throw new \Exception('Make sure a file named "config.json" exists in the root directory, that it is NOT writeable for '.whoami().' but readable');
         }
 
-        $this->config = json_decode(file_get_contents(__DIR__.'/../config.json'), true);
+        $this->config = json_decode(file_get_contents($configPath), true);
 
         if (is_null($this->config)) {
             throw new \Exception('The config file looks like is not a valid JSON');

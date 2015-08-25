@@ -6,6 +6,11 @@ use Modules\FlatFileConfigServiceProvider;
 use Modules\GithubServiceProvider;
 
 $app = new Application();
+
+$app->register(new Silex\Provider\MonologServiceProvider(), array(
+    'monolog.logfile' => __DIR__.'/var/logs/error.log',
+));
+
 $app->register(new RoutingServiceProvider());
 
 $app->register(new GithubServiceProvider());

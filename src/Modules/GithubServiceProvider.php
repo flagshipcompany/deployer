@@ -63,7 +63,7 @@ class GithubServiceProvider  implements ServiceProviderInterface
         $project = $request->attributes->get('project');
         $this->env = $request->attributes->get('env');
 
-        $conf = $app['deployer.config'][$project][$this->env];
+        $conf = $this->app['deployer.config'][$project][$this->env];
 
         $this->targetBranch = $conf['branch'];
         $this->acceptedPushers = $conf['accepted_pushers'];
@@ -79,8 +79,8 @@ class GithubServiceProvider  implements ServiceProviderInterface
     {
         foreach ($this->payload['commits'] as $commit) {
             $msg = "<a href=\"mailto:{$commit['author']['email']}\">{$commit['author']['name']}</a> committed:<br />";
-            $msg .= "<pre>{$commit['message']}</pre><br />";
-            $msg .= "See <a href=\"{$commit['url']}\">commit</a> on GitHub";
+            $msg .= "<pre>{$commit['message']}</pre>";
+            $msg .= "<i>See <a href=\"{$commit['url']}\">commit</a> on GitHub.</i>";
             $this->commitMessages[] = $msg;
         }
     }
@@ -102,7 +102,9 @@ class GithubServiceProvider  implements ServiceProviderInterface
 
         $this->resultContent = $body;
 
-        return mail(implode(',', $this->notifyEmails), strtoupper($this->env)." RELEASE - {$this->projectName}", $body, $headers);
+        $isForced = ($this->payload['forced'] ? '--FORCED-- ' : '');
+
+        return mail(implode(',', $this->notifyEmails), strtoupper($this->env)." RELEASE $isForced- {$this->projectName}", $body, $headers);
     }
 
     protected function runCommands()
