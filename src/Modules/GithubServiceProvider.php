@@ -62,7 +62,6 @@ class GithubServiceProvider  implements ServiceProviderInterface
     {
         $project = $request->attributes->get('project');
         $this->env = $request->attributes->get('env');
-
         $conf = $this->app['deployer.config'][$project][$this->env];
 
         $this->targetBranch = $conf['branch'];
