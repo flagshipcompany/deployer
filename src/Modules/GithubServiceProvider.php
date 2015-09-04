@@ -51,6 +51,10 @@ class GithubServiceProvider  implements ServiceProviderInterface
         $this->runCommands();
         $this->makeCommitMessages();
 
+        if (count($this->notifyEmails) <= 0) {
+            return new Response('OK', 200);
+        }
+
         if (!$this->sendEmail()) {
             return new Response($this->resultContent, 500);
         }
