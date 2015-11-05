@@ -25,6 +25,8 @@ class GithubServiceProvider  implements ServiceProviderInterface
     protected $commandOutputs = [];
     protected $commitMessages = [];
 
+    protected $tagCommand = 'git checkout $(git describe --tags `git rev-list --tags --max-count=1`)';
+
     protected $app;
 
     public function register(Container $app)
@@ -69,6 +71,7 @@ class GithubServiceProvider  implements ServiceProviderInterface
         $conf = $this->app['deployer.config'][$project][$this->env];
 
         $this->targetBranch = $conf['branch'];
+        $this->tagsOnly = isset($conf['tags_only']) && !!$conf['tags_only'];
         $this->acceptedPushers = $conf['accepted_pushers'];
         $this->commands = $conf['commands'];
         $this->projectName = $conf['project_name'];
@@ -114,6 +117,9 @@ class GithubServiceProvider  implements ServiceProviderInterface
     {
         chdir($this->projectPath);
 
+        if ($this->tagsOnly) {
+            array_unshift($this->commands, $this->tagCommand);
+        }
         array_unshift($this->commands, "git fetch origin && git reset --hard origin/$this->targetBranch");
 
         foreach ($this->commands as $command) {
@@ -141,6 +147,10 @@ class GithubServiceProvider  implements ServiceProviderInterface
 
         if ($this->payload === null) {
             return new Response('Got hit with a github deploy hook but payload is empty or is unreadable', 400);
+        }
+
+        if ($this->tagsOnly && explode('/', $this->payload['ref'])[1] != 'tags' && $this->targetBranch != explode('/', $this->payload['base_ref'])[2]) {
+            return new Response('Will not deploy because NOT a TAG push or the tag push does not target '.explode('/', $this->payload['ref'])[2]." while $targetBranch was expected", 400);
         }
 
         if ($this->targetBranch != explode('/', $this->payload['ref'])[2]) {
