@@ -40,7 +40,7 @@ Expected format for the config file is the following
 ```
 If you hit `mydeployer.com/project1/environment1`, it will load the config example above.
 
- * Your project folder needs to be cloned already and be owned by your server's user (apache or httpd ususally for CentOs and Ubuntu respectively)
+ * Your project folder needs to be cloned already and be owned by your server's user (typically apache for CentOs and www-data for Ubuntu)
  * A deploy key needs to be added to the repository on GitHub
  * A webhook needs to be installed as `application/x-www-form-urlencoded`, just the push event, with the `secret` chosen in the config file for that project and environment.
  * And that's it!
