@@ -4,6 +4,7 @@ use Silex\Application;
 use Silex\Provider\RoutingServiceProvider;
 use Modules\FlatFileConfigServiceProvider;
 use Modules\GithubServiceProvider;
+use Modules\GitlabServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
 
 $app = new Application();
@@ -18,6 +19,8 @@ $app->error(function (Exception $e, Request $request, $code) use ($app) {
 $app->register(new RoutingServiceProvider());
 
 $app->register(new GithubServiceProvider());
+$app->register(new GitlabServiceProvider());
+
 $app->register(new FlatFileConfigServiceProvider(__DIR__.'/../config.json'));
 
 return $app;
