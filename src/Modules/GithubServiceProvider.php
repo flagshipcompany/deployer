@@ -42,7 +42,7 @@ class GithubServiceProvider  extends VcsServiceProviderAbstract
         $body = '<html><body>';
         $body .= '<b>CHANGE LOG:</b><br />';
         $body .= implode('<hr/>', $this->commitMessages);
-        $body .= "<hr /><b><a href=\"{$this->payload['compare']}\">Compare</a> with previous release</b>";
+        $body .= "<br /><br /><b><a href=\"{$this->payload['compare']}\">Compare</a> with previous release</b>";
         $body .= '<hr/><b>COMMAND RESULTS</b><br />';
         $body .= '<pre>';
         $body .= implode("\n", $this->commandOutputs);
@@ -79,8 +79,8 @@ class GithubServiceProvider  extends VcsServiceProviderAbstract
             return new Response('Will not deploy because NOT a TAG push or the tag push does not target '.explode('/', $this->payload['ref'])[2]." while $targetBranch was expected", 400);
         }
 
-        if ($this->targetBranch != explode('/', $this->payload['ref'])[2]) {
-            return new Response('Will not deploy because target branch == '.explode('/', $this->payload['ref'])[2]." while $targetBranch was expected", 400);
+        if (!$this->tagsOnly && $this->targetBranch != explode('/', $this->payload['ref'])[2]) {
+            return new Response('Will not deploy because target branch == '.explode('/', $this->payload['ref'])[2]." while $this->targetBranch was expected", 400);
         }
 
         if (count($this->acceptedPushers) > 0 && !in_array(strtolower($this->payload['pusher']['email']), $this->acceptedPushers)) {
