@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  *  Handling the webhook from Github.
  */
-abstract class VcsServiceProviderAbstract  implements ServiceProviderInterface
+abstract class VcsServiceProviderAbstract implements ServiceProviderInterface
 {
     protected $targetBranch = 'master';
     protected $payload;
@@ -38,7 +38,7 @@ abstract class VcsServiceProviderAbstract  implements ServiceProviderInterface
 
     public function run(Request $request, $config)
     {
-        putenv('PATH=/sbin:/bin:/usr/sbin:/usr/bin'); //making sure we can find usr/bin and thus the programs.
+        putenv('PATH=/usr/local/src/nvm/versions/node/v8.17.0/bin:/sbin:/bin:/usr/sbin:/usr/bin:$PATH'); //making sure we can find usr/bin and thus the programs.
 
         $this->env = $request->get('env');
         $this->parseConfig($config);
@@ -72,7 +72,6 @@ abstract class VcsServiceProviderAbstract  implements ServiceProviderInterface
         $this->notifyEmails = $conf['notify_emails'];
         $this->fromEmail = $conf['from_email'];
         $this->secret = $conf['secret'];
-
     }
 
     protected function makeCommitMessages()
@@ -125,5 +124,4 @@ abstract class VcsServiceProviderAbstract  implements ServiceProviderInterface
     }
 
     abstract protected function checkPrerequisites(Request $request);
-
 }
