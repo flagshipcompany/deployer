@@ -10,9 +10,8 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  *  Handling the webhook from Gitlab.
  */
-class GitlabServiceProvider  extends VcsServiceProviderAbstract
+class GitlabServiceProvider extends VcsServiceProviderAbstract
 {
-
     public function register(Container $app)
     {
         $this->app = $app;
@@ -49,7 +48,7 @@ class GitlabServiceProvider  extends VcsServiceProviderAbstract
 
         $this->resultContent = $body;
 
-        $isForced = ($this->payload['forced'] ? '--FORCED-- ' : '');
+        $isForced = (!empty($this->payload['forced']) ? '--FORCED-- ' : '');
 
         return mail(implode(',', $this->notifyEmails), strtoupper($this->env)." RELEASE $isForced- {$this->projectName}", $body, $headers);
     }
@@ -57,7 +56,6 @@ class GitlabServiceProvider  extends VcsServiceProviderAbstract
 
     protected function checkPrerequisites(Request $request)
     {
-
         if ($request->headers->get('x-gitlab-token') !== $this->secret) {
             return new Response("The submitted token is not the expected one.", 400);
         }
