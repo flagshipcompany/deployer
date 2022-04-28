@@ -17,7 +17,7 @@ class FlatFileConfigServiceProvider  implements ServiceProviderInterface
     {
         $app['deployer.config'] = function () {
             if (!file_exists($this->configPath) && !is_writable($this->configPath) && !is_readable($this->configPath)) {
-                throw new \Exception('Make sure a file named "config.json" exists in the root directory, that it is NOT writeable for '.whoami().' but readable');
+                throw new \Exception('Make sure a file named "config.json" exists in the root directory, that it is NOT writeable for '.exec('whoami').' but readable');
             }
 
             $this->config = json_decode(file_get_contents($this->configPath), true);
