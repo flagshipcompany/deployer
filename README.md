@@ -16,14 +16,14 @@ Expected format for the config file is the following
       "project1" :{
         "environment1" :{
             "branch": "master",
-            "accepted_pushers" : ["patrick@flagshipcompany.com"],
+            "accepted_pushers" : ["Ugba908@bitbucket.org"],
             "commands" : [
                 "composer.phar install --no-dev 2>&1"
             ],
             "project_path" : "/var/www/project1",
             "project_name" : "My Super Web App",
-            "notify_emails" : ["patrick@flagshipcompany.com"],
-            "from_email" : "patrick@flagshipcompany.com",
+            "notify_emails" : ["Ugba908@bitbucket.org"],
+            "from_email" : "Ugba908@bitbucket.org",
             "secret": "super_duper_secret"
         },
         "environment2" :{
